@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>📋 Все заявки</h2>
+
+<!-- Статистика -->
+<div class="stats-grid">
+    <div class="stat-card status-open">
+        <span class="stat-number">{{ open_tickets|length }}</span>
+        <span class="stat-label">🔴 Открытые</span>
+    </div>
+    <div class="stat-card status-in_progress">
+        <span class="stat-number">{{ in_progress_tickets|length }}</span>
+        <span class="stat-label">🟡 В работе</span>
+    </div>
+    <div class="stat-card status-closed">
+        <span class="stat-number">{{ closed_tickets|length }}</span>
+        <span class="stat-label">🟢 Закрытые</span>
+    </div>
+</div>
+
+{% if tickets %}
+<div class="tickets-grid">
+    {% for ticket in tickets %}
+    <div class="ticket-card status-{{ ticket.status.value }}">
+        <div class="ticket-header">
+            <span class="ticket-id">#{{ ticket.id }}</span>
+            <span class="status-badge status-{{ ticket.status.value }}">
+                {% if ticket.status.value == 'open' %}🔴 Открыта
+                {% elif ticket.status.value == 'in_progress' %}🟡 В работе
+                {% else %}🟢 Закрыта{% endif %}
+            </span>
+        </div>
+        
+        <h3 class="ticket-title">{{ ticket.title }}</h3>
+        <p class="ticket-description">{{ ticket.description[:100] }}{% if ticket.description|length > 100 %}...{% endif %}</p>
+        
+        <div class="ticket-meta">
+            <small>📅 {{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+        </div>
+        
+        <div class="ticket-actions">
+            <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" 
+               class="btn btn-small">👀 Подробнее</a>
+            
+            {% if ticket.status.value != 'closed' %}
+            <a href="{{ url_for('manage_ticket', ticket_id=ticket.id) }}" 
+               class="btn btn-small btn-warning">⚙️ Управление</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>😴 Заявок пока нет</p>
+    <a href="{{ url_for('create_ticket') }}" class="btn btn-primary">Создать первую заявку</a>
+</div>
+{% endif %}
+{% endblock %}

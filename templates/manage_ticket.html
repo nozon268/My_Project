@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-container">
+    <h2>⚙️ Управление заявкой #{{ ticket.id }}</h2>
+    
+    <div class="ticket-preview">
+        <h3>{{ ticket.title }}</h3>
+        <p>{{ ticket.description }}</p>
+        <p><strong>Статус:</strong> 
+            <span class="status-badge status-{{ ticket.status.value }}">
+                {% if ticket.status.value == 'open' %}🔴 Открыта
+                {% elif ticket.status.value == 'in_progress' %}🟡 В работе
+                {% else %}🟢 Закрыта{% endif %}
+            </span>
+        </p>
+    </div>
+
+    {% if ticket.status.value == 'open' %}
+    <div class="action-section">
+        <h3>📥 Принять заявку в работу</h3>
+        <form method="POST">
+            <input type="hidden" name="action" value="assign">
+            <button type="submit" class="btn btn-warning">Принять заявку</button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if ticket.status.value == 'in_progress' %}
+    <div class="action-section">
+        <h3>✅ Закрыть заявку</h3>
+        <form method="POST">
+            <input type="hidden" name="action" value="close">
+            
+            <div class="form-group">
+                <label for="comment">Комментарий закрытия:</label>
+                <textarea id="comment" name="comment" rows="4" required
+                          placeholder="Опишите решение проблемы..."></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-success">Закрыть заявку</button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if ticket.status.value == 'closed' %}
+    <div class="alert alert-info">
+        ✅ Эта заявка уже закрыта
+    </div>
+    {% endif %}
+
+    <div class="action-buttons">
+        <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" 
+           class="btn btn-secondary">← Назад к заявке</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>👥 Пользователи системы</h2>
+
+{% if users %}
+<div class="users-grid">
+    {% for user in users %}
+    <div class="user-card {% if user.is_responsible %}responsible{% endif %}">
+        <div class="user-header">
+            <h3>{{ user.name }}</h3>
+            {% if user.is_responsible %}
+            <span class="role-badge responsible">👔 Ответственный</span>
+            {% else %}
+            <span class="role-badge">👤 Пользователь</span>
+            {% endif %}
+        </div>
+        
+        <div class="user-info">
+            <p><strong>ID:</strong> {{ user.id }}</p>
+            <p><strong>Тип:</strong> {% if user.is_responsible %}Ответственный сотрудник{% else %}Обычный пользователь{% endif %}</p>
+        </div>
+        
+        <div class="user-stats">
+            {% set user_tickets = [] %}
+            {% for ticket in tickets %}
+                {% if ticket.created_by == user.id %}
+                    {% set _ = user_tickets.append(ticket) %}
+                {% endif %}
+            {% endfor %}
+            <p><strong>Создано заявок:</strong> {{ user_tickets|length }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>👥 Пользователи не найдены</p>
+</div>
+{% endif %}
+
+<div class="action-buttons">
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">← На главную</a>
+</div>
+{% endblock %}

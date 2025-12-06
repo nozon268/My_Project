@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="ticket-detail">
+    <div class="ticket-header">
+        <h2>Заявка #{{ ticket.id }}</h2>
+        <span class="status-badge status-{{ ticket.status.value }} large">
+            {% if ticket.status.value == 'open' %}🔴 Открыта
+            {% elif ticket.status.value == 'in_progress' %}🟡 В работе
+            {% else %}🟢 Закрыта{% endif %}
+        </span>
+    </div>
+
+    <div class="ticket-content">
+        <div class="detail-section">
+            <h3>📄 Описание</h3>
+            <div class="detail-card">
+                <h4>{{ ticket.title }}</h4>
+                <p class="description-text">{{ ticket.description }}</p>
+            </div>
+        </div>
+
+        <div class="detail-grid">
+            <div class="detail-card">
+                <h4>👤 Создатель</h4>
+                <p>{{ created_by.name if created_by else 'Неизвестно' }}</p>
+            </div>
+            
+            <div class="detail-card">
+                <h4>📅 Дата создания</h4>
+                <p>{{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+            </div>
+            
+            {% if ticket.responsible_person_id %}
+            <div class="detail-card">
+                <h4>👔 Ответственный</h4>
+                <p>{{ responsible.name if responsible else 'Неизвестно' }}</p>
+            </div>
+            {% endif %}
+            
+            {% if ticket.status.value == 'closed' %}
+            <div class="detail-card">
+                <h4>✅ Дата закрытия</h4>
+                <p>{{ ticket.closed_at.strftime('%d.%m.%Y %H:%M') }}</p>
+            </div>
+            
+            <div class="detail-card full-width">
+                <h4>💬 Комментарий при закрытии</h4>
+                <p class="comment-text">{{ ticket.closing_comment }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('tickets_list') }}" class="btn btn-secondary">← Назад к списку</a>
+        
+        {% if ticket.status.value != 'closed' %}
+        <a href="{{ url_for('manage_ticket', ticket_id=ticket.id) }}" 
+           class="btn btn-warning">⚙️ Управление заявкой</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

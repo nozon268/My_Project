@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-container">
+    <h2>📝 Создание новой заявки</h2>
+    
+    <form method="POST" class="ticket-form">
+        <div class="form-group">
+            <label for="title">Заголовок заявки:</label>
+            <input type="text" id="title" name="title" required 
+                   placeholder="Кратко опишите проблему">
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Подробное описание:</label>
+            <textarea id="description" name="description" rows="5" required
+                      placeholder="Опишите проблему подробно..."></textarea>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Создать заявку</button>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
