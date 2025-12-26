@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>📊 Результаты SQL запросов из задания</h2>
+    
+    <div class="alert alert-info">
+        <strong>Инструкция:</strong> Выберите запрос для выполнения. Для запросов 3, 4, 5 введите ID пользователя или заявки.
+    </div>
+    
+    <!-- Кнопки для выполнения запросов -->
+    <div class="query-buttons">
+        <button onclick="loadQuery(1)" class="btn btn-primary">1. Текущие заявки</button>
+        <button onclick="loadQuery(2)" class="btn btn-success">2. Закрытые в этом месяце</button>
+        <button onclick="loadQuery(3, 2)" class="btn btn-warning">3. Заявки ответственного</button>
+        <button onclick="loadQuery(4, 1)" class="btn btn-info">4. Заявки пользователя</button>
+        <button onclick="loadQuery(5, 1)" class="btn btn-secondary">5. Создатель заявки</button>
+    </div>
+    
+    <!-- Параметры для запросов -->
+    <div class="query-params mt-3" id="queryParams" style="display: none;">
+        <label for="paramInput">Введите ID:</label>
+        <input type="number" id="paramInput" placeholder="ID пользователя/заявки" 
+               min="1" class="param-input">
+        <button onclick="loadCurrentQuery()" class="btn btn-primary">Выполнить</button>
+    </div>
+    
+    <!-- Результаты -->
+    <div id="results" class="mt-4">
+        <div class="alert alert-info" id="noResults">
+            Выберите запрос для выполнения
+        </div>
+        
+        <div id="resultsTable" style="display: none;">
+            <h3 id="queryTitle"></h3>
+            <div class="table-responsive">
+                <table class="table" id="resultsTableContent">
+                    <thead id="tableHeader"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="userInfo" style="display: none;">
+            <h3 id="userTitle"></h3>
+            <div class="card" id="userCard"></div>
+        </div>
+    </div>
+    
+    <div class="mt-4">
+        <h4>📋 Описание запросов:</h4>
+        <div class="query-descriptions">
+            <div class="query-desc">
+                <h5>1. Текущие заявки</h5>
+                <p>Список всех заявок со статусом "open" или "in_progress", отсортированных по приоритету и дате создания.</p>
+            </div>
+            <div class="query-desc">
+                <h5>2. Закрытые в этом месяце</h5>
+                <p>Заявки, закрытые в текущем месяце, с информацией о том, кто закрыл и когда.</p>
+            </div>
+            <div class="query-desc">
+                <h5>3. Заявки ответственного</h5>
+                <p>Все заявки, назначенные конкретному ответственному сотруднику.</p>
+            </div>
+            <div class="query-desc">
+                <h5>4. Заявки пользователя</h5>
+                <p>Все заявки, созданные конкретным пользователем.</p>
+            </div>
+            <div class="query-desc">
+                <h5>5. Создатель заявки</h5>
+                <p>Подробная информация о пользователе, создавшем конкретную заявку.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentQuery = 0;
+let currentParam = null;
+
+function loadQuery(queryNumber, defaultParam = null) {
+    currentQuery = queryNumber;
+    currentParam = defaultParam;
+    
+    const paramDiv = document.getElementById('queryParams');
+    const paramInput = document.getElementById('paramInput');
+    
+    // Показываем поле для параметра для запросов 3,4,5
+    if (queryNumber === 3 || queryNumber === 4 || queryNumber === 5) {
+        paramDiv.style.display = 'block';
+        if (defaultParam) {
+            paramInput.value = defaultParam;
+        } else {
+            paramInput.value = '';
+        }
+    } else {
+        paramDiv.style.display = 'none';
+        executeQuery();
+    }
+}
+
+function loadCurrentQuery() {
+    const paramInput = document.getElementById('paramInput');
+    currentParam = paramInput.value || currentParam;
+    
+    if ((currentQuery === 3 || currentQuery === 4 || currentQuery === 5) && !currentParam) {
+        alert('Пожалуйста, введите ID');
+        return;
+    }
+    
+    executeQuery();
+}
+
+function executeQuery() {
+    const urls = {
+        1: '/api/tickets',
+        2: '/api/tickets/closed-this-month',
+        3: `/api/tickets/by-responsible/${currentParam}`,
+        4: `/api/tickets/by-user/${currentParam}`,
+        5: `/api/ticket/${currentParam}/creator`
+    };
+    
+    const titles = {
+        1: '📋 Список текущих заявок',
+        2: '📅 Заявки, закрытые в этом месяце',
+        3: `👔 Заявки ответственного (ID: ${currentParam})`,
+        4: `👤 Заявки пользователя (ID: ${currentParam})`,
+        5: `ℹ️ Информация о создателе заявки (ID заявки: ${currentParam})`
+    };
+    
+    const url = urls[currentQuery];
+    if (!url) return;
+    
+    // Показываем загрузку
+    document.getElementById('noResults').style.display = 'block';
+    document.getElementById('noResults').textContent = 'Загрузка...';
+    document.getElementById('resultsTable').style.display = 'none';
+    document.getElementById('userInfo').style.display = 'none';
+    
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка сети');
+            }
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('noResults').style.display = 'none';
+            
+            if (currentQuery === 5) {
+                // Отображение информации о пользователе
+                showUserInfo(data, titles[currentQuery]);
+            } else {
+                // Отображение таблицы с заявками
+                showTable(data, titles[currentQuery]);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('noResults').style.display = 'block';
+            document.getElementById('noResults').innerHTML = 
+                `<div class="alert alert-error">Ошибка при выполнении запроса: ${error.message}</div>`;
+        });
+}
+
+function showTable(data, title) {
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+        document.getElementById('tableBody').innerHTML = 
+            '<tr><td colspan="10" class="text-center">Нет данных</td></tr>';
+        document.getElementById('resultsTable').style.display = 'block';
+        document.getElementById('queryTitle').textContent = title;
+        return;
+    }
+    
+    document.getElementById('userInfo').style.display = 'none';
+    document.getElementById('resultsTable').style.display = 'block';
+    document.getElementById('queryTitle').textContent = title;
+    
+    // Создаем заголовок таблицы
+    const headers = Object.keys(data[0]);
+    const headerHtml = headers.map(h => 
+        `<th>${h.replace(/_/g, ' ').toUpperCase()}</th>`
+    ).join('');
+    document.getElementById('tableHeader').innerHTML = `<tr>${headerHtml}</tr>`;
+    
+    // Заполняем тело таблицы
+    const bodyHtml = data.map(row => {
+        const cells = headers.map(h => {
+            let value = row[h];
+            if (value === null || value === undefined) value = '-';
+            if (typeof value === 'string' && value.length > 100) {
+                value = value.substring(0, 100) + '...';
+            }
+            return `<td>${value}</td>`;
+        }).join('');
+        return `<tr>${cells}</tr>`;
+    }).join('');
+    
+    document.getElementById('tableBody').innerHTML = bodyHtml;
+}
+
+function showUserInfo(userData, title) {
+    if (!userData || userData.error) {
+        document.getElementById('userCard').innerHTML = 
+            '<div class="alert alert-warning">Пользователь не найден</div>';
+        document.getElementById('userInfo').style.display = 'block';
+        document.getElementById('userTitle').textContent = title;
+        return;
+    }
+    
+    document.getElementById('resultsTable').style.display = 'none';
+    document.getElementById('userInfo').style.display = 'block';
+    document.getElementById('userTitle').textContent = title;
+    
+    const userHtml = `
+        <div class="card-body">
+            <h4 class="card-title">👤 ${userData.full_name || 'Неизвестно'}</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Email:</strong> ${userData.email || '-'}</p>
+                    <p><strong>Телефон:</strong> ${userData.phone || '-'}</p>
+                    <p><strong>Роль:</strong> ${userData.role || '-'}</p>
+                    <p><strong>Отдел:</strong> ${userData.department || '-'}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Зарегистрирован:</strong> ${userData.user_registered || '-'}</p>
+                    <p><strong>Последний вход:</strong> ${userData.last_login || '-'}</p>
+                    <p><strong>Активен:</strong> ${userData.is_active ? 'Да' : 'Нет'}</p>
+                </div>
+            </div>
+            <hr>
+            <h5>📊 Статистика</h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="stat-card small">
+                        <span class="stat-number">${userData.total_tickets || 0}</span>
+                        <span class="stat-label">Всего заявок</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card small">
+                        <span class="stat-number">${userData.open_tickets || 0}</span>
+                        <span class="stat-label">Открытые</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card small">
+                        <span class="stat-number">${userData.closed_tickets || 0}</span>
+                        <span class="stat-label">Закрытые</span>
+                    </div>
+                </div>
+            </div>
+            ${userData.last_ticket ? `<p class="mt-3"><strong>Последняя заявка:</strong> ${userData.last_ticket}</p>` : ''}
+        </div>
+    `;
+    
+    document.getElementById('userCard').innerHTML = userHtml;
+}
+</script>
+
+<style>
+.query-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.query-buttons .btn {
+    min-width: 200px;
+    padding: 10px 15px;
+}
+
+.query-params {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.query-params label {
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.param-input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 200px;
+    margin-right: 10px;
+}
+
+.table-responsive {
+    max-height: 500px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    z-index: 10;
+    padding: 12px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table td {
+    padding: 10px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.table tr:hover {
+    background-color: #f5f5f5;
+}
+
+.query-descriptions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.query-desc {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.query-desc h5 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+.query-desc p {
+    margin-bottom: 0;
+    color: #666;
+}
+
+.stat-card.small {
+    padding: 10px;
+    text-align: center;
+}
+
+.stat-card.small .stat-number {
+    font-size: 1.5rem;
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+}
+</style>
+{% endblock %}

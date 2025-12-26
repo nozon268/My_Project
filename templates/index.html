@@ -7,14 +7,23 @@
     
     <div class="stats">
         <div class="stat-card">
-            <span class="stat-number">{{ tickets_count }}</span>
+            <span class="stat-number">{{ stats.tickets or 0 }}</span>
             <span class="stat-label">Всего заявок</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ stats.users or 0 }}</span>
+            <span class="stat-label">Пользователей</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ stats.open or 0 }}</span>
+            <span class="stat-label">Открытые</span>
         </div>
     </div>
     
     <div class="actions">
         <a href="{{ url_for('create_ticket') }}" class="btn btn-primary">📝 Создать заявку</a>
         <a href="{{ url_for('tickets_list') }}" class="btn btn-secondary">📋 Посмотреть все заявки</a>
+        <a href="{{ url_for('queries_dashboard') }}" class="btn btn-warning">📊 SQL Запросы</a>
     </div>
 </div>
 
@@ -25,6 +34,7 @@
             <li>Создание новых заявок</li>
             <li>Просмотр статуса заявок</li>
             <li>Отслеживание прогресса</li>
+            <li>История выполненных работ</li>
         </ul>
     </div>
     
@@ -32,8 +42,19 @@
         <h3>👔 Для ответственных</h3>
         <ul>
             <li>Прием заявок в работу</li>
+            <li>Назначение исполнителей</li>
             <li>Закрытие заявок</li>
             <li>Комментирование решений</li>
+        </ul>
+    </div>
+    
+    <div class="feature-card">
+        <h3>📊 Для администраторов</h3>
+        <ul>
+            <li>Статистика по заявкам</li>
+            <li>Управление пользователями</li>
+            <li>Отчеты и аналитика</li>
+            <li>Настройка системы</li>
         </ul>
     </div>
 </div>
@@ -41,17 +62,22 @@
 <div class="users-preview">
     <h3>👥 Пользователи системы</h3>
     <div class="users-grid">
-        {% for user in users %}
-        <div class="user-card {% if user.is_responsible %}responsible{% endif %}">
-            <h4>{{ user.name }}</h4>
-            <p>ID: {{ user.id }}</p>
-            {% if user.is_responsible %}
-            <span class="role-badge">Ответственный</span>
-            {% else %}
-            <span class="role-badge">Пользователь</span>
-            {% endif %}
+        <!-- Пример статических данных, в реальном приложении будут данные из БД -->
+        <div class="user-card">
+            <h4>Иван Иванов</h4>
+            <p>ID: 1</p>
+            <span class="role-badge">👤 Пользователь</span>
         </div>
-        {% endfor %}
+        <div class="user-card responsible">
+            <h4>Анна Петрова</h4>
+            <p>ID: 2</p>
+            <span class="role-badge responsible">👔 Ответственный</span>
+        </div>
+        <div class="user-card">
+            <h4>Петр Сидоров</h4>
+            <p>ID: 3</p>
+            <span class="role-badge">👤 Пользователь</span>
+        </div>
     </div>
 </div>
 {% endblock %}

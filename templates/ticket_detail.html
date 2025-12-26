@@ -24,6 +24,7 @@
             <div class="detail-card">
                 <h4>👤 Создатель</h4>
                 <p>{{ created_by.name if created_by else 'Неизвестно' }}</p>
+                <small>ID: {{ ticket.created_by }}</small>
             </div>
             
             <div class="detail-card">
@@ -35,6 +36,7 @@
             <div class="detail-card">
                 <h4>👔 Ответственный</h4>
                 <p>{{ responsible.name if responsible else 'Неизвестно' }}</p>
+                <small>ID: {{ ticket.responsible_person_id }}</small>
             </div>
             {% endif %}
             

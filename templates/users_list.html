@@ -29,6 +29,11 @@
                 {% endif %}
             {% endfor %}
             <p><strong>Создано заявок:</strong> {{ user_tickets|length }}</p>
+            
+            {% set open_tickets = user_tickets|selectattr('status', 'equalto', 'open')|list %}
+            {% set closed_tickets = user_tickets|selectattr('status', 'equalto', 'closed')|list %}
+            <p><strong>Открытые:</strong> {{ open_tickets|length }}</p>
+            <p><strong>Закрытые:</strong> {{ closed_tickets|length }}</p>
         </div>
     </div>
     {% endfor %}
@@ -36,6 +41,7 @@
 {% else %}
 <div class="empty-state">
     <p>👥 Пользователи не найдены</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">← На главную</a>
 </div>
 {% endif %}
 

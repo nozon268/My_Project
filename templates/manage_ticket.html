@@ -19,9 +19,10 @@
     {% if ticket.status.value == 'open' %}
     <div class="action-section">
         <h3>📥 Принять заявку в работу</h3>
+        <p>Назначьте себя ответственным и измените статус на "В работе"</p>
         <form method="POST">
             <input type="hidden" name="action" value="assign">
-            <button type="submit" class="btn btn-warning">Принять заявку</button>
+            <button type="submit" class="btn btn-warning">✅ Принять заявку</button>
         </form>
     </div>
     {% endif %}
@@ -29,6 +30,7 @@
     {% if ticket.status.value == 'in_progress' %}
     <div class="action-section">
         <h3>✅ Закрыть заявку</h3>
+        <p>Завершите работу над заявкой и укажите комментарий</p>
         <form method="POST">
             <input type="hidden" name="action" value="close">
             
@@ -38,20 +40,25 @@
                           placeholder="Опишите решение проблемы..."></textarea>
             </div>
             
-            <button type="submit" class="btn btn-success">Закрыть заявку</button>
+            <button type="submit" class="btn btn-success">✅ Закрыть заявку</button>
         </form>
     </div>
     {% endif %}
 
     {% if ticket.status.value == 'closed' %}
     <div class="alert alert-info">
-        ✅ Эта заявка уже закрыта
+        <h3>✅ Заявка закрыта</h3>
+        <p>Эта заявка уже была закрыта {{ ticket.closed_at.strftime('%d.%m.%Y %H:%M') }}</p>
+        {% if ticket.closing_comment %}
+        <p><strong>Комментарий:</strong> {{ ticket.closing_comment }}</p>
+        {% endif %}
     </div>
     {% endif %}
 
     <div class="action-buttons">
         <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" 
            class="btn btn-secondary">← Назад к заявке</a>
+        <a href="{{ url_for('tickets_list') }}" class="btn btn-primary">📋 К списку заявок</a>
     </div>
 </div>
 {% endblock %}
